@@ -219,6 +219,48 @@
 
   .submit-btn:active { opacity: 0.8; transform: scale(0.99); }
 
+  /* Scan button */
+  .scan-btn {
+    width: 100%;
+    padding: 13px 16px;
+    background: var(--gold-light);
+    color: var(--gold);
+    border: 1px solid var(--gold);
+    border-radius: var(--radius-md);
+    font-size: 15px;
+    font-weight: 500;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: opacity 0.2s;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .scan-btn:active { opacity: 0.75; }
+  .scan-btn.scanning { opacity: 0.6; pointer-events: none; }
+
+  @media (prefers-color-scheme: dark) {
+    .scan-btn { background: #2a2010; border-color: #8a5a10; color: #d4951f; }
+  }
+
+  /* Region dropdown slide-in */
+  .region-wrapper {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease, opacity 0.3s ease;
+    opacity: 0;
+    margin-bottom: 0;
+  }
+  .region-wrapper.open {
+    max-height: 80px;
+    opacity: 1;
+    margin-bottom: 16px;
+  }
+
   .wine-list { display: flex; flex-direction: column; gap: 12px; }
 
   .wine-card {
@@ -368,6 +410,35 @@
 
   .info-box strong { color: var(--text); font-size: 14px; display: block; margin-bottom: 6px; }
 
+  /* Settings box for API key */
+  .settings-box {
+    background: var(--bg2);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .settings-box-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 10px;
+  }
+  .api-key-row { display: flex; gap: 8px; }
+  .api-key-row .form-input { font-size: 13px; }
+  .api-save-btn {
+    padding: 10px 16px;
+    background: var(--wine-mid);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    white-space: nowrap;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
   .toast {
     position: fixed;
     bottom: calc(80px + var(--safe-bottom));
@@ -443,105 +514,127 @@
   <div class="app-header">
     <div>
       <div class="app-title">My Wine Cellar</div>
-      <div class="app-subtitle" id="header-count">0本を記録中</div>
+      <div class="app-subtitle" id="header-count">0æ¬ãè¨é²ä¸­</div>
     </div>
-    <div style="font-size:32px;opacity:0.75">🍷</div>
+    <div style="font-size:32px;opacity:0.75">ð·</div>
   </div>
 
   <div class="scroll-area">
     <div class="tab-content active" id="tab-add">
+
+      <!-- Scan Button -->
+      <button class="scan-btn" id="scan-btn" onclick="triggerScan()">
+        <span style="font-size:20px">ð·</span>ã©ãã«ãåçããèªåå¥å
+      </button>
+      <input type="file" id="scan-input" accept="image/*" capture="environment" style="display:none" onchange="handleScanFile(this)">
+
       <div class="form-group">
-        <label class="form-label">ワインの種類</label>
+        <label class="form-label">ã¯ã¤ã³ã®ç¨®é¡</label>
         <div class="type-pills">
-          <div class="type-pill selected" onclick="selectType(this,'赤')">赤</div>
-          <div class="type-pill" onclick="selectType(this,'白')">白</div>
-          <div class="type-pill" onclick="selectType(this,'ロゼ')">ロゼ</div>
-          <div class="type-pill" onclick="selectType(this,'スパークリング')">スパークリング</div>
-          <div class="type-pill" onclick="selectType(this,'オレンジ')">オレンジ</div>
-          <div class="type-pill" onclick="selectType(this,'甘口')">甘口</div>
+          <div class="type-pill selected" onclick="selectType(this,'èµ¤')">èµ¤</div>
+          <div class="type-pill" onclick="selectType(this,'ç½')">ç½</div>
+          <div class="type-pill" onclick="selectType(this,'ã­ã¼')">ã­ã¼</div>
+          <div class="type-pill" onclick="selectType(this,'ã¹ãã¼ã¯ãªã³ã°')">ã¹ãã¼ã¯ãªã³ã°</div>
+          <div class="type-pill" onclick="selectType(this,'ãªã¬ã³ã¸')">ãªã¬ã³ã¸</div>
+          <div class="type-pill" onclick="selectType(this,'çå£')">çå£</div>
         </div>
       </div>
 
       <div class="form-group">
-        <label class="form-label">作り手 / ワイン名</label>
-        <input class="form-input" id="f-name" type="text" placeholder="例：シャトー・マルゴー" autocomplete="off">
+        <label class="form-label">ä½ãæï¼ãã¡ã¼ã / ã·ã£ãã¼ / èµåï¼</label>
+        <input class="form-input" id="f-producer" type="text" placeholder="ä¾ï¼ãã¡ã¼ãã»ã«ãã¬ã¼ã´" autocomplete="off">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">çå / ã­ã¥ã´ã§å</label>
+        <input class="form-input" id="f-cuvee" type="text" placeholder="ä¾ï¼ãã¥ãªãã¼ã»ã¢ã³ã©ãã·ã§ï¼ä»»æï¼" autocomplete="off">
       </div>
 
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">生産国</label>
-          <select class="form-select" id="f-country">
-            <option value="">選択...</option>
-            <option>フランス</option>
-            <option>イタリア</option>
-            <option>スペイン</option>
-            <option>ドイツ</option>
-            <option>日本</option>
-            <option>アメリカ</option>
-            <option>チリ</option>
-            <option>アルゼンチン</option>
-            <option>オーストラリア</option>
-            <option>ニュージーランド</option>
-            <option>ポルトガル</option>
-            <option>オーストリア</option>
-            <option>その他</option>
+          <label class="form-label">çç£å½</label>
+          <select class="form-select" id="f-country" onchange="updateRegions()">
+            <option value="">é¸æ...</option>
+            <option>ãã©ã³ã¹</option>
+            <option>ã¤ã¿ãªã¢</option>
+            <option>ã¹ãã¤ã³</option>
+            <option>ãã¤ã</option>
+            <option>æ¥æ¬</option>
+            <option>ã¢ã¡ãªã«</option>
+            <option>ããª</option>
+            <option>ã¢ã«ã¼ã³ãã³</option>
+            <option>ãªã¼ã¹ãã©ãªã¢</option>
+            <option>ãã¥ã¼ã¸ã¼ã©ã³ã</option>
+            <option>ãã«ãã¬ã«</option>
+            <option>ãªã¼ã¹ããªã¢</option>
+            <option>ãã®ä»</option>
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">ヴィンテージ</label>
+          <label class="form-label">ã´ã£ã³ãã¼ã¸</label>
           <input class="form-input" id="f-vintage" type="number" placeholder="2020" min="1900" max="2099" inputmode="numeric">
         </div>
       </div>
 
+      <!-- Region dropdown (slides in after country selection) -->
+      <div class="region-wrapper" id="region-wrapper">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">å°å / ã¢ãã©ã·ãªã³</label>
+          <select class="form-select" id="f-region">
+            <option value="">é¸æ...</option>
+          </select>
+        </div>
+      </div>
+
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">購入価格（円）</label>
+          <label class="form-label">è³¼å¥ä¾¡æ ¼ï¼åï¼</label>
           <input class="form-input" id="f-price" type="number" placeholder="3500" inputmode="numeric">
         </div>
         <div class="form-group">
-          <label class="form-label">本数</label>
+          <label class="form-label">æ¬æ°</label>
           <input class="form-input" id="f-qty" type="number" placeholder="1" min="1" value="1" inputmode="numeric">
         </div>
       </div>
 
       <div class="form-group">
-        <label class="form-label">購入ショップ</label>
-        <input class="form-input" id="f-shop" type="text" placeholder="例：ワインマーケット" autocomplete="off">
+        <label class="form-label">è³¼å¥ã·ã§ãã</label>
+        <input class="form-input" id="f-shop" type="text" placeholder="ä¾ï¼ã¯ã¤ã³ãã¼ã±ãã" autocomplete="off">
       </div>
 
       <div class="form-group">
-        <label class="form-label">購入日</label>
+        <label class="form-label">è³¼å¥æ¥</label>
         <input class="form-input" id="f-date" type="date">
       </div>
 
       <div class="form-group">
-        <label class="form-label">評価</label>
+        <label class="form-label">è©ä¾¡</label>
         <div class="star-row" id="star-row">
-          <span class="star" onclick="setRating(1)">★</span>
-          <span class="star" onclick="setRating(2)">★</span>
-          <span class="star" onclick="setRating(3)">★</span>
-          <span class="star" onclick="setRating(4)">★</span>
-          <span class="star" onclick="setRating(5)">★</span>
+          <span class="star" onclick="setRating(1)">â</span>
+          <span class="star" onclick="setRating(2)">â</span>
+          <span class="star" onclick="setRating(3)">â</span>
+          <span class="star" onclick="setRating(4)">â</span>
+          <span class="star" onclick="setRating(5)">â</span>
         </div>
       </div>
 
       <div class="form-group">
-        <label class="form-label">メモ</label>
-        <textarea class="form-textarea" id="f-memo" placeholder="テイスティングノートや入手経緯など..."></textarea>
+        <label class="form-label">ã¡ã¢</label>
+        <textarea class="form-textarea" id="f-memo" placeholder="ãã¤ã¹ãã£ã³ã°ãã¼ããå¥æçµç·¯ãªã©..."></textarea>
       </div>
 
-      <button class="submit-btn" onclick="addWine()">セラーに追加 ＋</button>
+      <button class="submit-btn" onclick="addWine()">ã»ã©ã¼ã«è¿½å  ï¼</button>
     </div>
 
     <div class="tab-content" id="tab-list">
       <div class="filter-row" id="filter-row">
-        <div class="filter-chip active" onclick="setFilter(this,'すべて')">すべて</div>
-        <div class="filter-chip" onclick="setFilter(this,'赤')">赤</div>
-        <div class="filter-chip" onclick="setFilter(this,'白')">白</div>
-        <div class="filter-chip" onclick="setFilter(this,'ロゼ')">ロゼ</div>ロゼ</div>
-        <div class="filter-chip" onclick="setFilter(this,'スパークリング')">スパークリング</div>
-        <div class="filter-chip" onclick="setFilter(this,'オレンジ')">オレンジ</div>
-        <div class="filter-chip" onclick="setFilter(this,'甘口')">甘口</div>
+        <div class="filter-chip active" onclick="setFilter(this,'ãã¹ã¦')">ãã¹ã¦</div>
+        <div class="filter-chip" onclick="setFilter(this,'èµ¤')">èµ¤</div>
+        <div class="filter-chip" onclick="setFilter(this,'ç½')">ç½</div>
+        <div class="filter-chip" onclick="setFilter(this,'ã­ã¼')">ã­ã¼</div>
+        <div class="filter-chip" onclick="setFilter(this,'ã¹ãã¼ã¯ãªã³ã°')">ã¹ãã¼ã¯ãªã³ã°</div>
+        <div class="filter-chip" onclick="setFilter(this,'ãªã¬ã³ã¸')">ãªã¬ã³ã¸</div>
+        <div class="filter-chip" onclick="setFilter(this,'çå£')">çå£</div>
       </div>
       <div class="wine-list" id="wine-list"></div>
     </div>
@@ -549,58 +642,70 @@
     <div class="tab-content" id="tab-stats">
       <div class="stats-grid">
         <div class="stat-card">
-          <div class="stat-label">記録本数</div>
+          <div class="stat-label">è¨é²æ¬æ°</div>
           <div class="stat-value" id="stat-total">0</div>
-          <div class="stat-sub">本</div>
+          <div class="stat-sub">æ¬</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">在庫</div>
+          <div class="stat-label">å¨åº«</div>
           <div class="stat-value" id="stat-stock">0</div>
-          <div class="stat-sub">本</div>
+          <div class="stat-sub">æ¬</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">購入総額</div>
-          <div class="stat-value" id="stat-total-price" style="font-size:18px">¥0</div>
+          <div class="stat-label">è³¼å¥ç·é¡</div>
+          <div class="stat-value" id="stat-total-price" style="font-size:18px">Â¥0</div>
           <div class="stat-sub">&nbsp;</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">平均価格</div>
+          <div class="stat-label">å¹³åä¾¡æ ¼</div>
           <div class="stat-value" id="stat-avg" style="font-size:18px">-</div>
-          <div class="stat-sub">1本あたり</div>
+          <div class="stat-sub">1æ¬ããã</div>
         </div>
       </div>
 
-      <div class="section-title" style="margin-top:4px">データ出力</div>
+      <div class="section-title" style="margin-top:4px">ð· ã©ãã«èªåèª­ã¿åãè¨­å®</div>
+      <div class="settings-box">
+        <div class="settings-box-title">Anthropic APIã­ã¼ï¼åçå¥åã«å¿è¦ï¼</div>
+        <div class="api-key-row">
+          <input class="form-input" id="api-key-field" type="password" placeholder="sk-ant-api03-..." autocomplete="off">
+          <button class="api-save-btn" onclick="saveApiKey()">ä¿å­</button>
+        </div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:8px;line-height:1.6">
+          ã­ã¼ã¯ç«¯æ«åã®ã¿ä¿å­ããã¾ãã<a href="https://console.anthropic.com" target="_blank" style="color:var(--wine-mid)">console.anthropic.com</a>ã§åå¾ã§ãã¾ãã
+        </div>
+      </div>
+
+      <div class="section-title">ãã¼ã¿åºå</div>
       <button class="action-btn" onclick="exportCSV()">
-        <span class="action-icon">📊</span>CSVダウンロード（スプレッドシート用）
+        <span class="action-icon">ð</span>CSVãã¦ã³ã­ã¼ãï¼ã¹ãã¬ããã·ã¼ãç¨ï¼
       </button>
       <button class="action-btn" onclick="copyTSV()">
-        <span class="action-icon">📋</span>コピー → スプレッドシートに貼り付け
+        <span class="action-icon">ð</span>ã³ãã¼ â ã¹ãã¬ããã·ã¼ãã«è²¼ãä»ã
       </button>
       <button class="action-btn" onclick="exportJSON()">
-        <span class="action-icon">💾</span>JSONバックアップ保存
+        <span class="action-icon">ð¾</span>JSONããã¯ã¢ããä¿å­
       </button>
       <button class="action-btn" onclick="importJSON()">
-        <span class="action-icon">📥</span>JSONから復元
+        <span class="action-icon">ð¥</span>JSONããå¾©å
         <input type="file" id="import-file" accept=".json" style="display:none" onchange="doImport(this)">
       </button>
 
       <div class="info-box">
-        <strong>Googleスプレッドシートへの取り込み方</strong>
-        「コピー」ボタンを押してGoogleスプレッドシートのA1セルに貼り付けると、全データが列に展開されます。またはCSVをダウンロードして「ファイル → インポート」でも読み込めます。
+        <strong>Googleã¹ãã¬ããã·ã¼ãã¸ã®åãè¾¼ã¿æ¹</strong>
+        ãã³ãã¼ããã¿ã³ãæ¼ãã¦Googleã¹ãã¬ããã·ã¼ãã®A1ã»ã«ã«è²¼ãä»ããã¨ãå¨ãã¼ã¿ãåã«å±éããã¾ããã¾ãã¯CSVããã¦ã³ã­ã¼ããã¦ããã¡ã¤ã« â ã¤ã³ãã¼ããã§ãèª­ã¿è¾¼ãã¾ãã
       </div>
     </div>
   </div>
 
   <nav class="bottom-nav">
     <button class="nav-btn active" onclick="showTab('add',this)">
-      <span class="nav-icon">＋</span>追加
+      <span class="nav-icon">ï¼</span>è¿½å 
     </button>
     <button class="nav-btn" onclick="showTab('list',this)">
-      <span class="nav-icon">🍾</span>セラー
+      <span class="nav-icon">ð¾</span>ã»ã©ã¼
     </button>
     <button class="nav-btn" onclick="showTab('stats',this)">
-      <span class="nav-icon">📊</span>統計
+      <span class="nav-icon">ð</span>çµ±è¨
     </button>
   </nav>
 </div>
@@ -609,10 +714,164 @@
 
 <script>
 let wines = JSON.parse(localStorage.getItem('wine-cellar-v2') || '[]');
-let currentType = '赤';
+let currentType = 'èµ¤';
 let currentRating = 0;
-let currentFilter = 'すべて';
+let currentFilter = 'ãã¹ã¦';
 
+// ââ Region data ââââââââââââââââââââââââââââââââââââââââââââââ
+const REGIONS = {
+  'ãã©ã³ã¹': ['ãã«ãã¼','ãã«ã´ã¼ãã¥','ã·ã£ã³ãã¼ãã¥','ã¢ã«ã¶ã¹','ã­ã¼ã','ã­ã¯ã¼ã«','ã©ã³ã°ããã¯ï¼ã«ã·ã¨ã³','ãã­ã´ã¡ã³ã¹','ã¸ã¥ã©','ãµã´ã©ã¯','ã³ã«ã·ã«','ãã®ä»'],
+  'ã¤ã¿ãªã¢': ['ãã¨ã¢ã³ã','ãã¹ã«ã¼ã','ã´ã§ãã','ã·ããªã¢','ã«ã³ã¥ã³ãªã¢','ã¦ã³ããªã¢','ãã«ã±','ã¢ãã«ããã©','ãã¼ãªã¢','ããªã¦ãª','ãã¬ã³ãã£ã¼ãã»ã¢ã«ãã»ã¢ãã£ã¸ã§','ãµã«ãã¼ãã£','ãã®ä»'],
+  'ã¹ãã¤ã³': ['ãªãªã','ãªãã©ã»ãã«ã»ãã¥ã¨ã­','ããªãªã©ã¼ã','ã¬ãªã·ã¢ï¼ãªã¢ã¹ã»ãã¤ã·ã£ã¹ï¼','ã«ã¿ã«ã¼ãã£','ããã¼ã©','ããã¼ãªã£','ã«ã¹ãã£ã¼ãªã£','ãã¬ã¹ï¼ã·ã§ãªã¼ï¼','ãã®ä»'],
+  'ãã¤ã': ['ã¢ã¼ã¼ã«','ã©ã¤ã³ã¬ã¦','ã©ã¤ã³ããã»ã³','ããã¡ã«ã','ãã¼ã¨','ãã©ã³ã±ã³','ãã¼ãã³','ãã®ä»'],
+  'æ¥æ¬': ['åæµ·é','å±±å½¢','é·é','å±±æ¢¨','å¤§éª','å³¶æ ¹','ãã®ä»'],
+  'ã¢ã¡ãªã«': ['ããã»ã´ã¡ã¬ã¼','ã½ãã','ãã½ã»ã­ãã¬ã¹','ãªã¬ã´ã³','ã¯ã·ã³ãã³å·','ãã¥ã¼ã¨ã¼ã¯å·','ãã®ä»'],
+  'ããª': ['ãã¤ãã»ã´ã¡ã¬ã¼','ã³ã«ãã£ã°ã¢','ã«ãµãã©ã³ã«','ã¨ã«ã­','ã¢ã³ã³ã«ã°ã¢','ãã®ä»'],
+  'ã¢ã«ã¼ã³ãã³': ['ã¡ã³ãã¼ãµ','ãµã«ã¿','ãã¿ã´ãã¢','ãã®ä»'],
+  'ãªã¼ã¹ãã©ãªã¢': ['ãã­ããµã»ã´ã¡ã¬ã¼','ãã¯ã©ã¼ã¬ã³ã»ã´ã§ã¼ã«','ã¯ã¬ã¢ã»ã´ã¡ã¬ã¼','ãã¼ã¬ã¬ããã»ãªã´ã¡ã¼','ã¤ã©ã»ã´ã¡ã¬ã¼','ãã®ä»'],
+  'ãã¥ã¼ã¸ã¼ã©ã³ã': ['ãã¼ã«ãã­','ãã¼ã¯ã¹ãã¤','ã»ã³ãã©ã«ã»ãªã¿ã´','ãã¼ãã£ã³ãã­','ãã®ä»'],
+  'ãã«ãã¬ã«': ['ãã¦ã­','ãã«ã','ã´ã£ã¼ãã§ã»ã´ã§ã«ã','ã¢ã¬ã³ãã¼ã¸ã§','ãã®ä»'],
+  'ãªã¼ã¹ããªã¢': ['ã´ã¡ããã¦','ã¯ã¬ã ã¹ã¿ã¼ã«','ã«ã³ãã¿ã¼ã«','ã¦ã£ã¼ã³','ãã«ã²ã³ã©ã³ã','ãã®ä»'],
+};
+
+function updateRegions(preselect) {
+  const country = document.getElementById('f-country').value;
+  const wrapper = document.getElementById('region-wrapper');
+  const select = document.getElementById('f-region');
+  const list = REGIONS[country] || [];
+  if (list.length > 0) {
+    select.innerHTML = '<option value="">é¸æ...</option>' +
+      list.map(r => `<option value="${r}"${preselect === r ? ' selected' : ''}>${r}</option>`).join('');
+    wrapper.classList.add('open');
+  } else {
+    wrapper.classList.remove('open');
+    select.innerHTML = '<option value="">é¸æ...</option>';
+  }
+}
+
+// ââ Photo scan (Anthropic Vision) âââââââââââââââââââââââââââââ
+function triggerScan() {
+  const key = localStorage.getItem('anthropic-api-key');
+  if (!key) {
+    showToast('çµ±è¨ã¿ãã§APIã­ã¼ãè¨­å®ãã¦ãã ãã');
+    return;
+  }
+  document.getElementById('scan-input').click();
+}
+
+function handleScanFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  input.value = '';
+  runScan(file);
+}
+
+async function compressImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 1600;
+        let w = img.width, h = img.height;
+        if (w > MAX || h > MAX) {
+          if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+          else       { w = Math.round(w * MAX / h); h = MAX; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        const b64 = canvas.toDataURL('image/jpeg', 0.88).split(',')[1];
+        resolve({ base64: b64, mimeType: 'image/jpeg' });
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function runScan(file) {
+  const btn = document.getElementById('scan-btn');
+  btn.classList.add('scanning');
+  btn.innerHTML = '<span style="font-size:20px">â³</span>èª­ã¿åãä¸­...';
+  try {
+    const apiKey = localStorage.getItem('anthropic-api-key') || '';
+    const { base64, mimeType } = await compressImage(file);
+
+    const prompt = `ãã®ã¯ã¤ã³ã©ãã«ããä»¥ä¸ã®æå ±ãJSONå½¢å¼ã§æ½åºãã¦ãã ããã
+é ç®: producerï¼ä½ãæ/çç£èåï¼, cuveeï¼çåã¾ãã¯ã­ã¥ã´ã§å/ã¯ã¤ã³åï¼, countryï¼çç£å½ãæ¥æ¬èªã§ï¼, regionï¼å°ååãæ¥æ¬èªã§ï¼, vintageï¼è¥¿æ¦4æ¡ã®æ°å­ã®ã¿ï¼, typeï¼èµ¤/ç½/ã­ã¼/ã¹ãã¼ã¯ãªã³ã°/ãªã¬ã³ã¸/çå£ ã®ããããï¼
+ä¸æãªé ç®ã¯ç©ºæå­åã«ãã¦ãã ãããJSONã®ã¿è¿ãã¦ãã ãããä¾ï¼{"producer":"","cuvee":"","country":"","region":"","vintage":"","type":""}`;
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+        'anthropic-dangerous-allow-browser': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 512,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: mimeType, data: base64 } },
+            { type: 'text', text: prompt }
+          ]
+        }]
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || 'API Error ' + res.status);
+    }
+
+    const data = await res.json();
+    const text = data.content?.[0]?.text || '';
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('è§£æã§ãã¾ããã§ãã');
+    const info = JSON.parse(jsonMatch[0]);
+
+    // Fill form fields
+    if (info.producer) document.getElementById('f-producer').value = info.producer;
+    if (info.cuvee)    document.getElementById('f-cuvee').value    = info.cuvee;
+    if (info.vintage)  document.getElementById('f-vintage').value  = info.vintage;
+    if (info.country) {
+      const sel = document.getElementById('f-country');
+      for (let o of sel.options) {
+        if (o.value === info.country) { sel.value = info.country; break; }
+      }
+      updateRegions(info.region || '');
+    }
+    if (info.type) {
+      const pills = document.querySelectorAll('.type-pill');
+      pills.forEach(p => {
+        if (p.textContent === info.type) { selectType(p, info.type); }
+      });
+    }
+
+    showToast('ã©ãã«ãèª­ã¿åãã¾ãã â');
+  } catch (e) {
+    showToast('èª­ã¿åãå¤±æ: ' + e.message);
+  } finally {
+    btn.classList.remove('scanning');
+    btn.innerHTML = '<span style="font-size:20px">ð·</span>ã©ãã«ãåçããèªåå¥å';
+  }
+}
+
+function saveApiKey() {
+  const key = document.getElementById('api-key-field').value.trim();
+  if (!key) { showToast('APIã­ã¼ãå¥åãã¦ãã ãã'); return; }
+  localStorage.setItem('anthropic-api-key', key);
+  document.getElementById('api-key-field').value = '';
+  showToast('APIã­ã¼ãä¿å­ãã¾ãã');
+}
+
+// ââ Core app functions ââââââââââââââââââââââââââââââââââââââââ
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -627,7 +886,7 @@ function save() {
 
 function updateHeaderCount() {
   const stock = wines.reduce((s,w) => s + w.stock, 0);
-  document.getElementById('header-count').textContent = wines.length + '本を記録中（在庫' + stock + '本）';
+  document.getElementById('header-count').textContent = wines.length + 'æ¬ãè¨é²ä¸­ï¼å¨åº«' + stock + 'æ¬ï¼';
 }
 
 function showTab(tab, btn) {
@@ -636,8 +895,13 @@ function showTab(tab, btn) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
   if (tab === 'list') renderList();
-  if (tab === 'stats') updateStats();
+  if (tab === 'stats') { updateStats(); loadApiKeyField(); }
   document.querySelector('.scroll-area').scrollTop = 0;
+}
+
+function loadApiKeyField() {
+  const key = localStorage.getItem('anthropic-api-key');
+  if (key) document.getElementById('api-key-field').placeholder = 'ï¼ä¿å­æ¸ã¿ï¼';
 }
 
 function selectType(el, type) {
@@ -661,16 +925,21 @@ function setFilter(el, filter) {
 }
 
 function addWine() {
-  const name = document.getElementById('f-name').value.trim();
-  if (!name) { showToast('作り手 / ワイン名を入力してください'); return; }
+  const producer = document.getElementById('f-producer').value.trim();
+  const cuvee    = document.getElementById('f-cuvee').value.trim();
+  if (!producer && !cuvee) { showToast('ä½ãæã¾ãã¯ã­ã¥ã´ã§åãå¥åãã¦ãã ãã'); return; }
 
+  const name = [producer, cuvee].filter(Boolean).join(' / ');
   const price = document.getElementById('f-price').value;
   const qty = parseInt(document.getElementById('f-qty').value) || 1;
 
   wines.push({
     id: Date.now(),
+    producer,
+    cuvee,
     name,
     country: document.getElementById('f-country').value,
+    region:  document.getElementById('f-region').value,
     vintage: document.getElementById('f-vintage').value,
     price: price ? parseInt(price) : null,
     qty, stock: qty,
@@ -684,59 +953,63 @@ function addWine() {
 
   save();
   resetForm();
-  showToast('セラーに追加しました 🍷');
+  showToast('ã»ã©ã¼ã«è¿½å ãã¾ãã ð·');
   setTimeout(() => showTab('list', document.querySelectorAll('.nav-btn')[1]), 600);
 }
 
 function resetForm() {
-  ['f-name','f-vintage','f-price','f-shop','f-memo'].forEach(id => document.getElementById(id).value = '');
+  ['f-producer','f-cuvee','f-vintage','f-price','f-shop','f-memo'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('f-country').value = '';
   document.getElementById('f-qty').value = '1';
   document.getElementById('f-date').value = '';
+  document.getElementById('region-wrapper').classList.remove('open');
+  document.getElementById('f-region').innerHTML = '<option value="">é¸æ...</option>';
   currentRating = 0;
   document.querySelectorAll('.star').forEach(s => s.classList.remove('filled'));
   document.querySelectorAll('.type-pill').forEach((p,i) => p.classList.toggle('selected', i === 0));
-  currentType = '赤';
+  currentType = 'èµ¤';
 }
 
 function renderList() {
   const list = document.getElementById('wine-list');
-  let filtered = currentFilter === 'すべて' ? wines : wines.filter(w => w.type === currentFilter);
+  let filtered = currentFilter === 'ãã¹ã¦' ? wines : wines.filter(w => w.type === currentFilter);
 
   if (filtered.length === 0) {
-    list.innerHTML = '<div class="empty-state"><div class="empty-icon">🍾</div><div class="empty-text">' +
-      (wines.length === 0 ? 'まだワインがありません<br>「追加」タブから登録しましょう' : 'このカテゴリのワインはありません') +
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">ð¾</div><div class="empty-text">' +
+      (wines.length === 0 ? 'ã¾ã ã¯ã¤ã³ãããã¾ãã<br>ãè¿½å ãã¿ãããç»é²ãã¾ããã' : 'ãã®ã«ãã´ãªã®ã¯ã¤ã³ã¯ããã¾ãã') +
       '</div></div>';
     return;
   }
 
   list.innerHTML = [...filtered].reverse().map(w => {
-    const stars = w.rating ? '★'.repeat(w.rating) + '☆'.repeat(5 - w.rating) : '';
-    const dateStr = w.date ? w.date.replace(/-/g, '/') + ' 購入' : '';
+    const displayName = w.producer || w.cuvee ? [w.producer, w.cuvee].filter(Boolean).join(' / ') : (w.name || '');
+    const stars = w.rating ? 'â'.repeat(w.rating) + 'â'.repeat(5 - w.rating) : '';
+    const dateStr = w.date ? w.date.replace(/-/g, '/') + ' è³¼å¥' : '';
+    const locationTag = [w.country, w.region].filter(Boolean).join(' âº ');
     return `<div class="wine-card">
       <div class="wine-card-header">
-        <div class="wine-name">${esc(w.name)}</div>
+        <div class="wine-name">${esc(displayName)}</div>
         <div style="display:flex;align-items:center;gap:4px">
           <div class="wine-vintage">${esc(w.vintage || '')}</div>
-          <button class="delete-btn" onclick="deleteWine(${w.id})">×</button>
+          <button class="delete-btn" onclick="deleteWine(${w.id})">Ã</button>
         </div>
       </div>
       <div class="wine-meta">
         <span class="wine-tag type-tag">${esc(w.type)}</span>
-        ${w.country ? `<span class="wine-tag">${esc(w.country)}</span>` : ''}
+        ${locationTag ? `<span class="wine-tag">${esc(locationTag)}</span>` : ''}
         ${w.shop ? `<span class="wine-tag">${esc(w.shop)}</span>` : ''}
       </div>
       ${w.memo ? `<div class="memo-text">${esc(w.memo)}</div>` : ''}
       ${dateStr ? `<div class="wine-date">${dateStr}</div>` : ''}
       <div class="wine-footer">
         <div>
-          <div class="wine-price">${w.price ? '¥' + w.price.toLocaleString() : '—'}</div>
+          <div class="wine-price">${w.price ? 'Â¥' + w.price.toLocaleString() : 'â'}</div>
           ${stars ? `<div class="wine-stars">${stars}</div>` : ''}
         </div>
         <div class="wine-stock">
-          <button class="stock-btn" onclick="changeStock(${w.id},-1)">−</button>
+          <button class="stock-btn" onclick="changeStock(${w.id},-1)">â</button>
           <span class="stock-count">${w.stock}</span>
-          <button class="stock-btn" onclick="changeStock(${w.id},1)">＋</button>
+          <button class="stock-btn" onclick="changeStock(${w.id},1)">ï¼</button>
         </div>
       </div>
     </div>`;
@@ -748,7 +1021,7 @@ function esc(s) {
 }
 
 function deleteWine(id) {
-  if (!confirm('このワインを削除しますか？')) return;
+  if (!confirm('ãã®ã¯ã¤ã³ãåé¤ãã¾ããï¼')) return;
   wines = wines.filter(w => w.id !== id);
   save();
   renderList();
@@ -768,22 +1041,32 @@ function updateStats() {
   const avg = totalPricedQty ? Math.round(totalPrice / totalPricedQty) : 0;
   document.getElementById('stat-total').textContent = total;
   document.getElementById('stat-stock').textContent = stock;
-  document.getElementById('stat-total-price').textContent = '¥' + totalPrice.toLocaleString();
-  document.getElementById('stat-avg').textContent = avg ? '¥' + avg.toLocaleString() : '—';
+  document.getElementById('stat-total-price').textContent = 'Â¥' + totalPrice.toLocaleString();
+  document.getElementById('stat-avg').textContent = avg ? 'Â¥' + avg.toLocaleString() : 'â';
 }
 
 function toRows() {
-  const header = ['作り手/ワイン名','種類','生産国','ヴィンテージ','購入価格','本数','在庫','購入ショップ','購入日','評価','メモ'];
+  const header = ['ä½ãæ','çå/ã­ã¥ã´ã§å','ç¨®é¡','çç£å½','å°å','ã´ã£ã³ãã¼ã¸','è³¼å¥ä¾¡æ ¼','æ¬æ°','å¨åº«','è³¼å¥ã·ã§ãã','è³¼å¥æ¥','è©ä¾¡','ã¡ã¢'];
   const rows = wines.map(w => [
-    w.name, w.type, w.country || '', w.vintage || '',
-    w.price || '', w.qty, w.stock, w.shop || '', w.date || '',
-    w.rating ? w.rating + '/5' : '', w.memo || ''
+    w.producer || w.name || '',
+    w.cuvee || '',
+    w.type,
+    w.country || '',
+    w.region  || '',
+    w.vintage || '',
+    w.price   || '',
+    w.qty,
+    w.stock,
+    w.shop    || '',
+    w.date    || '',
+    w.rating  ? w.rating + '/5' : '',
+    w.memo    || ''
   ]);
   return { header, rows };
 }
 
 function exportCSV() {
-  if (wines.length === 0) { showToast('データがありません'); return; }
+  if (wines.length === 0) { showToast('ãã¼ã¿ãããã¾ãã'); return; }
   const { header, rows } = toRows();
   const csv = '\uFEFF' + [header, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -791,26 +1074,26 @@ function exportCSV() {
   const a = document.createElement('a');
   a.href = url; a.download = 'wine-cellar-' + new Date().toISOString().slice(0,10) + '.csv';
   a.click();
-  showToast('CSVをダウンロードしました');
+  showToast('CSVããã¦ã³ã­ã¼ããã¾ãã');
 }
 
 function copyTSV() {
-  if (wines.length === 0) { showToast('データがありません'); return; }
+  if (wines.length === 0) { showToast('ãã¼ã¿ãããã¾ãã'); return; }
   const { header, rows } = toRows();
   const tsv = [header, ...rows].map(r => r.join('\t')).join('\n');
   navigator.clipboard.writeText(tsv)
-    .then(() => showToast('コピーしました！スプレッドシートのA1に貼り付けてください'))
-    .catch(() => showToast('コピーに失敗しました。CSVをお使いください'));
+    .then(() => showToast('ã³ãã¼ãã¾ããï¼ã¹ãã¬ããã·ã¼ãã®A1ã«è²¼ãä»ãã¦ãã ãã'))
+    .catch(() => showToast('ã³ãã¼ã«å¤±æãã¾ãããCSVããä½¿ããã ãã'));
 }
 
 function exportJSON() {
-  if (wines.length === 0) { showToast('データがありません'); return; }
+  if (wines.length === 0) { showToast('ãã¼ã¿ãããã¾ãã'); return; }
   const blob = new Blob([JSON.stringify(wines, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url; a.download = 'wine-cellar-backup-' + new Date().toISOString().slice(0,10) + '.json';
   a.click();
-  showToast('バックアップを保存しました');
+  showToast('ããã¯ã¢ãããä¿å­ãã¾ãã');
 }
 
 function importJSON() {
@@ -825,15 +1108,15 @@ function doImport(input) {
     try {
       const data = JSON.parse(e.target.result);
       if (!Array.isArray(data)) throw new Error();
-      if (!confirm(data.length + '本のデータを読み込みます。現在のデータに追加されます。よろしいですか？')) return;
+      if (!confirm(data.length + 'æ¬ã®ãã¼ã¿ãèª­ã¿è¾¼ã¿ã¾ããç¾å¨ã®ãã¼ã¿ã«è¿½å ããã¾ããããããã§ããï¼')) return;
       const existingIds = new Set(wines.map(w => w.id));
       const newWines = data.filter(w => !existingIds.has(w.id));
       wines = [...wines, ...newWines];
       save();
-      showToast(newWines.length + '本を追加しました');
+      showToast(newWines.length + 'æ¬ãè¿½å ãã¾ãã');
       renderList();
     } catch {
-      showToast('ファイルの読み込みに失敗しました');
+      showToast('ãã¡ã¤ã«ã®èª­ã¿è¾¼ã¿ã«å¤±æãã¾ãã');
     }
   };
   reader.readAsText(file);
