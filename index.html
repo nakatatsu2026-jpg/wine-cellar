@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Wine Cellar">
+<title>My Wine Cellar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --wine-deep: #501313;
+    --wine-mid: #A32D2D;
+    --wine-light: #F7C1C1;
+    --wine-pale: #FCEBEB;
+    --gold: #BA7517;
+    --gold-light: #FAEEDA;
+    --text: #1a1a1a;
+    --text-muted: #6b6b6b;
+    --bg: #ffffff;
+    --bg2: #f5f3f0;
+    --border: rgba(0,0,0,0.12);
+    --radius-md: 8px;
+    --radius-lg: 14px;
+    --safe-top: env(safe-area-inset-top);
+    --safe-bottom: env(safe-area-inset-bottom);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --text: #f0ece8;
+      --text-muted: #9a9690;
+      --bg: #1c1a18;
+      --bg2: #262320;
+      --border: rgba(255,255,255,0.1);
+      --wine-pale: #2d1a1a;
+      --wine-light: #5c2a2a;
+    }
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg2);
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    color: var(--text);
+    overscroll-behavior: none;
+  }
+
+  #app {
+    max-width: 480px;
+    margin: 0 auto;
+    background: var(--bg);
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  .app-header {
+    padding: calc(16px + var(--safe-top)) 20px 14px;
+    border-bottom: 0.5px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg);
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+
+  .app-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--wine-deep);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .app-title { color: var(--wine-light); }
+  }
+
+  .app-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  .scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: calc(64px + var(--safe-bottom));
+  }
+
+  .tab-content { display: none; padding: 20px; }
+  .tab-content.active { display: block; }
+
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    background: var(--bg);
+    border-top: 0.5px solid var(--border);
+    padding-bottom: var(--safe-bottom);
+    z-index: 20;
+  }
+
+  .nav-btn {
+    flex: 1;
+    padding: 10px 4px 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    color: var(--text-muted);
+    font-size: 10px;
+    font-family: 'DM Sans', sans-serif;
+    transition: color 0.2s;
+  }
+
+  .nav-btn.active { color: var(--wine-mid); }
+  .nav-icon { font-size: 22px; line-height: 1; }
+
+  .form-group { margin-bottom: 16px; }
+
+  .form-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+
+  .form-input, .form-select, .form-textarea {
+    width: 100%;
+    padding: 11px 14px;
+    font-size: 16px;
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--text);
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    transition: border-color 0.2s;
+  }
+
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    border-color: var(--wine-mid);
+  }
+
+  .form-textarea { resize: none; min-height: 80px; line-height: 1.5; }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .type-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+
+  .type-pill {
+    padding: 7px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    border: 0.5px solid var(--border);
+    cursor: pointer;
+    background: var(--bg);
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .type-pill.selected {
+    background: var(--wine-pale);
+    border-color: var(--wine-mid);
+    color: var(--wine-mid);
+    font-weight: 500;
+  }
+
+  .star-row { display: flex; gap: 10px; margin-top: 4px; }
+
+  .star {
+    font-size: 28px;
+    cursor: pointer;
+    color: var(--border);
+    line-height: 1;
+    transition: color 0.15s;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .star.filled { color: var(--gold); }
+
+  .submit-btn {
+    width: 100%;
+    padding: 15px;
+    background: var(--wine-mid);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 16px;
+    font-weight: 500;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: opacity 0.2s;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .submit-btn:active { opacity: 0.8; transform: scale(0.99); }
+
+  .wine-list { display: flex; flex-direction: column; gap: 12px; }
+
+  .wine-card {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+  }
+
+  .wine-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+
+  .wine-name {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 17px;
+    font-weight: 400;
+    color: var(--text);
+    flex: 1;
+    padding-right: 8px;
+    line-height: 1.3;
+  }
+
+  .wine-vintage {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--wine-mid);
+    white-space: nowrap;
+  }
+
+  .wine-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+
+  .wine-tag {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 12px;
+    background: var(--bg2);
+    color: var(--text-muted);
+    border: 0.5px solid var(--border);
+  }
+
+  .wine-tag.type-tag {
+    background: var(--wine-pale);
+    color: var(--wine-mid);
+    border-color: var(--wine-light);
+    font-weight: 500;
+  }
+
+  .wine-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 0.5px solid var(--border);
+    padding-top: 10px;
+    margin-top: 8px;
+  }
+
+  .wine-price { font-size: 16px; font-weight: 500; }
+  .wine-stars { font-size: 12px; color: var(--gold); letter-spacing: 1px; margin-top: 2px; }
+  .memo-text { font-size: 13px; color: var(--text-muted); margin-top: 6px; font-style: italic; line-height: 1.5; }
+  .wine-date { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+
+  .wine-stock { display: flex; align-items: center; gap: 10px; }
+
+  .stock-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 0.5px solid var(--border);
+    background: var(--bg2);
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+    -webkit-user-select: none;
+    user-select: none;
+    line-height: 1;
+  }
+
+  .stock-btn:active { background: var(--wine-pale); color: var(--wine-mid); border-color: var(--wine-mid); }
+  .stock-count { font-size: 16px; font-weight: 500; min-width: 24px; text-align: center; }
+
+  .empty-state { text-align: center; padding: 80px 20px; color: var(--text-muted); }
+  .empty-icon { font-size: 48px; margin-bottom: 14px; opacity: 0.5; }
+  .empty-text { font-size: 15px; line-height: 1.7; }
+
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+
+  .stat-card {
+    background: var(--bg2);
+    border-radius: var(--radius-md);
+    padding: 16px;
+  }
+
+  .stat-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; }
+  .stat-value { font-size: 24px; font-weight: 500; }
+  .stat-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  .section-title {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 10px;
+  }
+
+  .action-btn {
+    width: 100%;
+    padding: 14px 16px;
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    font-size: 15px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    color: var(--text);
+    margin-bottom: 10px;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: border-color 0.2s;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .action-btn:active { background: var(--bg2); }
+  .action-icon { font-size: 18px; width: 24px; text-align: center; }
+
+  .info-box {
+    background: var(--bg2);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.7;
+    margin-top: 20px;
+  }
+
+  .info-box strong { color: var(--text); font-size: 14px; display: block; margin-bottom: 6px; }
+
+  .toast {
+    position: fixed;
+    bottom: calc(80px + var(--safe-bottom));
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #1a1a1a;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 14px;
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 100;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .delete-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    line-height: 1;
+    margin-left: 4px;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .delete-btn:active { background: var(--wine-pale); color: var(--wine-mid); }
+
+  .filter-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+
+  .filter-row::-webkit-scrollbar { display: none; }
+
+  .filter-chip {
+    padding: 5px 14px;
+    border-radius: 16px;
+    border: 0.5px solid var(--border);
+    background: var(--bg);
+    color: var(--text-muted);
+    font-size: 13px;
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: 'DM Sans', sans-serif;
+    -webkit-user-select: none;
+    user-select: none;
+    transition: all 0.15s;
+  }
+
+  .filter-chip.active {
+    background: var(--wine-pale);
+    border-color: var(--wine-mid);
+    color: var(--wine-mid);
+    font-weight: 500;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="app-header">
+    <div>
+      <div class="app-title">My Wine Cellar</div>
+      <div class="app-subtitle" id="header-count">0本を記録中</div>
+    </div>
+    <div style="font-size:32px;opacity:0.75">🍷</div>
+  </div>
+
+  <div class="scroll-area">
+    <div class="tab-content active" id="tab-add">
+      <div class="form-group">
+        <label class="form-label">ワインの種類</label>
+        <div class="type-pills">
+          <div class="type-pill selected" onclick="selectType(this,'赤')">赤</div>
+          <div class="type-pill" onclick="selectType(this,'白')">白</div>
+          <div class="type-pill" onclick="selectType(this,'ロゼ')">ロゼ</div>
+          <div class="type-pill" onclick="selectType(this,'スパークリング')">スパークリング</div>
+          <div class="type-pill" onclick="selectType(this,'オレンジ')">オレンジ</div>
+          <div class="type-pill" onclick="selectType(this,'甘口')">甘口</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">作り手 / ワイン名</label>
+        <input class="form-input" id="f-name" type="text" placeholder="例：シャトー・マルゴー" autocomplete="off">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">生産国</label>
+          <select class="form-select" id="f-country">
+            <option value="">選択...</option>
+            <option>フランス</option>
+            <option>イタリア</option>
+            <option>スペイン</option>
+            <option>ドイツ</option>
+            <option>日本</option>
+            <option>アメリカ</option>
+            <option>チリ</option>
+            <option>アルゼンチン</option>
+            <option>オーストラリア</option>
+            <option>ニュージーランド</option>
+            <option>ポルトガル</option>
+            <option>オーストリア</option>
+            <option>その他</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ヴィンテージ</label>
+          <input class="form-input" id="f-vintage" type="number" placeholder="2020" min="1900" max="2099" inputmode="numeric">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">購入価格（円）</label>
+          <input class="form-input" id="f-price" type="number" placeholder="3500" inputmode="numeric">
+        </div>
+        <div class="form-group">
+          <label class="form-label">本数</label>
+          <input class="form-input" id="f-qty" type="number" placeholder="1" min="1" value="1" inputmode="numeric">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">購入ショップ</label>
+        <input class="form-input" id="f-shop" type="text" placeholder="例：ワインマーケット" autocomplete="off">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">購入日</label>
+        <input class="form-input" id="f-date" type="date">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">評価</label>
+        <div class="star-row" id="star-row">
+          <span class="star" onclick="setRating(1)">★</span>
+          <span class="star" onclick="setRating(2)">★</span>
+          <span class="star" onclick="setRating(3)">★</span>
+          <span class="star" onclick="setRating(4)">★</span>
+          <span class="star" onclick="setRating(5)">★</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">メモ</label>
+        <textarea class="form-textarea" id="f-memo" placeholder="テイスティングノートや入手経緯など..."></textarea>
+      </div>
+
+      <button class="submit-btn" onclick="addWine()">セラーに追加 ＋</button>
+    </div>
+
+    <div class="tab-content" id="tab-list">
+      <div class="filter-row" id="filter-row">
+        <div class="filter-chip active" onclick="setFilter(this,'すべて')">すべて</div>
+        <div class="filter-chip" onclick="setFilter(this,'赤')">赤</div>
+        <div class="filter-chip" onclick="setFilter(this,'白')">白</div>
+        <div class="filter-chip" onclick="setFilter(this,'ロゼ')">ロゼ</div>ロゼ</div>
+        <div class="filter-chip" onclick="setFilter(this,'スパークリング')">スパークリング</div>
+        <div class="filter-chip" onclick="setFilter(this,'オレンジ')">オレンジ</div>
+        <div class="filter-chip" onclick="setFilter(this,'甘口')">甘口</div>
+      </div>
+      <div class="wine-list" id="wine-list"></div>
+    </div>
+
+    <div class="tab-content" id="tab-stats">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">記録本数</div>
+          <div class="stat-value" id="stat-total">0</div>
+          <div class="stat-sub">本</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">在庫</div>
+          <div class="stat-value" id="stat-stock">0</div>
+          <div class="stat-sub">本</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">購入総額</div>
+          <div class="stat-value" id="stat-total-price" style="font-size:18px">¥0</div>
+          <div class="stat-sub">&nbsp;</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">平均価格</div>
+          <div class="stat-value" id="stat-avg" style="font-size:18px">-</div>
+          <div class="stat-sub">1本あたり</div>
+        </div>
+      </div>
+
+      <div class="section-title" style="margin-top:4px">データ出力</div>
+      <button class="action-btn" onclick="exportCSV()">
+        <span class="action-icon">📊</span>CSVダウンロード（スプレッドシート用）
+      </button>
+      <button class="action-btn" onclick="copyTSV()">
+        <span class="action-icon">📋</span>コピー → スプレッドシートに貼り付け
+      </button>
+      <button class="action-btn" onclick="exportJSON()">
+        <span class="action-icon">💾</span>JSONバックアップ保存
+      </button>
+      <button class="action-btn" onclick="importJSON()">
+        <span class="action-icon">📥</span>JSONから復元
+        <input type="file" id="import-file" accept=".json" style="display:none" onchange="doImport(this)">
+      </button>
+
+      <div class="info-box">
+        <strong>Googleスプレッドシートへの取り込み方</strong>
+        「コピー」ボタンを押してGoogleスプレッドシートのA1セルに貼り付けると、全データが列に展開されます。またはCSVをダウンロードして「ファイル → インポート」でも読み込めます。
+      </div>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <button class="nav-btn active" onclick="showTab('add',this)">
+      <span class="nav-icon">＋</span>追加
+    </button>
+    <button class="nav-btn" onclick="showTab('list',this)">
+      <span class="nav-icon">🍾</span>セラー
+    </button>
+    <button class="nav-btn" onclick="showTab('stats',this)">
+      <span class="nav-icon">📊</span>統計
+    </button>
+  </nav>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let wines = JSON.parse(localStorage.getItem('wine-cellar-v2') || '[]');
+let currentType = '赤';
+let currentRating = 0;
+let currentFilter = 'すべて';
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function save() {
+  localStorage.setItem('wine-cellar-v2', JSON.stringify(wines));
+  updateHeaderCount();
+}
+
+function updateHeaderCount() {
+  const stock = wines.reduce((s,w) => s + w.stock, 0);
+  document.getElementById('header-count').textContent = wines.length + '本を記録中（在庫' + stock + '本）';
+}
+
+function showTab(tab, btn) {
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (tab === 'list') renderList();
+  if (tab === 'stats') updateStats();
+  document.querySelector('.scroll-area').scrollTop = 0;
+}
+
+function selectType(el, type) {
+  document.querySelectorAll('.type-pill').forEach(p => p.classList.remove('selected'));
+  el.classList.add('selected');
+  currentType = type;
+}
+
+function setRating(n) {
+  currentRating = n;
+  document.querySelectorAll('.star').forEach((s, i) => {
+    s.classList.toggle('filled', i < n);
+  });
+}
+
+function setFilter(el, filter) {
+  currentFilter = filter;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderList();
+}
+
+function addWine() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { showToast('作り手 / ワイン名を入力してください'); return; }
+
+  const price = document.getElementById('f-price').value;
+  const qty = parseInt(document.getElementById('f-qty').value) || 1;
+
+  wines.push({
+    id: Date.now(),
+    name,
+    country: document.getElementById('f-country').value,
+    vintage: document.getElementById('f-vintage').value,
+    price: price ? parseInt(price) : null,
+    qty, stock: qty,
+    shop: document.getElementById('f-shop').value.trim(),
+    date: document.getElementById('f-date').value,
+    memo: document.getElementById('f-memo').value.trim(),
+    type: currentType,
+    rating: currentRating,
+    addedAt: new Date().toISOString()
+  });
+
+  save();
+  resetForm();
+  showToast('セラーに追加しました 🍷');
+  setTimeout(() => showTab('list', document.querySelectorAll('.nav-btn')[1]), 600);
+}
+
+function resetForm() {
+  ['f-name','f-vintage','f-price','f-shop','f-memo'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-country').value = '';
+  document.getElementById('f-qty').value = '1';
+  document.getElementById('f-date').value = '';
+  currentRating = 0;
+  document.querySelectorAll('.star').forEach(s => s.classList.remove('filled'));
+  document.querySelectorAll('.type-pill').forEach((p,i) => p.classList.toggle('selected', i === 0));
+  currentType = '赤';
+}
+
+function renderList() {
+  const list = document.getElementById('wine-list');
+  let filtered = currentFilter === 'すべて' ? wines : wines.filter(w => w.type === currentFilter);
+
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">🍾</div><div class="empty-text">' +
+      (wines.length === 0 ? 'まだワインがありません<br>「追加」タブから登録しましょう' : 'このカテゴリのワインはありません') +
+      '</div></div>';
+    return;
+  }
+
+  list.innerHTML = [...filtered].reverse().map(w => {
+    const stars = w.rating ? '★'.repeat(w.rating) + '☆'.repeat(5 - w.rating) : '';
+    const dateStr = w.date ? w.date.replace(/-/g, '/') + ' 購入' : '';
+    return `<div class="wine-card">
+      <div class="wine-card-header">
+        <div class="wine-name">${esc(w.name)}</div>
+        <div style="display:flex;align-items:center;gap:4px">
+          <div class="wine-vintage">${esc(w.vintage || '')}</div>
+          <button class="delete-btn" onclick="deleteWine(${w.id})">×</button>
+        </div>
+      </div>
+      <div class="wine-meta">
+        <span class="wine-tag type-tag">${esc(w.type)}</span>
+        ${w.country ? `<span class="wine-tag">${esc(w.country)}</span>` : ''}
+        ${w.shop ? `<span class="wine-tag">${esc(w.shop)}</span>` : ''}
+      </div>
+      ${w.memo ? `<div class="memo-text">${esc(w.memo)}</div>` : ''}
+      ${dateStr ? `<div class="wine-date">${dateStr}</div>` : ''}
+      <div class="wine-footer">
+        <div>
+          <div class="wine-price">${w.price ? '¥' + w.price.toLocaleString() : '—'}</div>
+          ${stars ? `<div class="wine-stars">${stars}</div>` : ''}
+        </div>
+        <div class="wine-stock">
+          <button class="stock-btn" onclick="changeStock(${w.id},-1)">−</button>
+          <span class="stock-count">${w.stock}</span>
+          <button class="stock-btn" onclick="changeStock(${w.id},1)">＋</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function deleteWine(id) {
+  if (!confirm('このワインを削除しますか？')) return;
+  wines = wines.filter(w => w.id !== id);
+  save();
+  renderList();
+}
+
+function changeStock(id, delta) {
+  const w = wines.find(x => x.id === id);
+  if (w) { w.stock = Math.max(0, w.stock + delta); save(); renderList(); }
+}
+
+function updateStats() {
+  const total = wines.reduce((s,w) => s + w.qty, 0);
+  const stock = wines.reduce((s,w) => s + w.stock, 0);
+  const priced = wines.filter(w => w.price);
+  const totalPrice = priced.reduce((s,w) => s + w.price * w.qty, 0);
+  const totalPricedQty = priced.reduce((s,w) => s + w.qty, 0);
+  const avg = totalPricedQty ? Math.round(totalPrice / totalPricedQty) : 0;
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-stock').textContent = stock;
+  document.getElementById('stat-total-price').textContent = '¥' + totalPrice.toLocaleString();
+  document.getElementById('stat-avg').textContent = avg ? '¥' + avg.toLocaleString() : '—';
+}
+
+function toRows() {
+  const header = ['作り手/ワイン名','種類','生産国','ヴィンテージ','購入価格','本数','在庫','購入ショップ','購入日','評価','メモ'];
+  const rows = wines.map(w => [
+    w.name, w.type, w.country || '', w.vintage || '',
+    w.price || '', w.qty, w.stock, w.shop || '', w.date || '',
+    w.rating ? w.rating + '/5' : '', w.memo || ''
+  ]);
+  return { header, rows };
+}
+
+function exportCSV() {
+  if (wines.length === 0) { showToast('データがありません'); return; }
+  const { header, rows } = toRows();
+  const csv = '\uFEFF' + [header, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'wine-cellar-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  showToast('CSVをダウンロードしました');
+}
+
+function copyTSV() {
+  if (wines.length === 0) { showToast('データがありません'); return; }
+  const { header, rows } = toRows();
+  const tsv = [header, ...rows].map(r => r.join('\t')).join('\n');
+  navigator.clipboard.writeText(tsv)
+    .then(() => showToast('コピーしました！スプレッドシートのA1に貼り付けてください'))
+    .catch(() => showToast('コピーに失敗しました。CSVをお使いください'));
+}
+
+function exportJSON() {
+  if (wines.length === 0) { showToast('データがありません'); return; }
+  const blob = new Blob([JSON.stringify(wines, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'wine-cellar-backup-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  showToast('バックアップを保存しました');
+}
+
+function importJSON() {
+  document.getElementById('import-file').click();
+}
+
+function doImport(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!Array.isArray(data)) throw new Error();
+      if (!confirm(data.length + '本のデータを読み込みます。現在のデータに追加されます。よろしいですか？')) return;
+      const existingIds = new Set(wines.map(w => w.id));
+      const newWines = data.filter(w => !existingIds.has(w.id));
+      wines = [...wines, ...newWines];
+      save();
+      showToast(newWines.length + '本を追加しました');
+      renderList();
+    } catch {
+      showToast('ファイルの読み込みに失敗しました');
+    }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+updateHeaderCount();
+</script>
+</body>
+</html>
